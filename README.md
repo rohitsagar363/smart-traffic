@@ -115,8 +115,31 @@ All services should be healthy.
 
 ---
 
-## ✅ Next: Step 2 - Ingest Sensor Data into Kafka
+### ✅ Step 2: Kafka Producers and Consumers
 
-In Step 2, we’ll write producers to ingest simulated sensor data (JSON) into Kafka topics.
+This step sets up the basic data flow using Kafka, simulating real-time traffic sensor data.
 
-Stay tuned! 🚧
+#### 🛠️ Components
+
+- **Kafka Topics**:
+  - `traffic.raw.sensors`
+  - `traffic.curated.sensors`
+  - `traffic.anomalies`
+
+- **Producer**:
+  - `producer.py`: Sends sample sensor readings (e.g., speed, location, z-score) to Kafka topics.
+
+- **Consumer**:
+  - `infra/kafka/consumers.sh`: Bash-based Kafka console consumer for testing.
+
+#### 🧪 How to Test
+
+```bash
+# Run Bash consumer for a topic
+docker compose exec kafka bash
+bash /data/kafka/consumers.sh traffic.raw.sensors
+
+
+# Run Python producer to send test messages
+python producer.py
+
