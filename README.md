@@ -143,3 +143,53 @@ bash /data/kafka/consumers.sh traffic.raw.sensors
 # Run Python producer to send test messages
 python producer.py
 
+
+## ⚙️ Step 3: Spark Streaming — Enrichment & Filtering
+
+In this step, we implemented a **Spark Structured Streaming job** to consume sensor data from Kafka, enrich it, and split it into curated and anomaly streams.
+
+---
+
+### 🎯 Goals
+
+- Read JSON events from `traffic.raw.sensors` Kafka topic.
+- Enrich each event (e.g., parse timestamps, derive speed categories, etc.).
+- Apply basic **anomaly detection** (e.g., high `z_score`).
+- Write:
+  - **All enriched data** to `traffic.curated.sensors`
+  - **Only anomalies** to `traffic.anomalies`
+
+---
+
+### 🛠️ Components
+
+| File                                     | Purpose                                          |
+|------------------------------------------|--------------------------------------------------|
+| `streaming/spark_app/stream_processor.py` | Main Spark job that reads, enriches, and filters |
+| `infra/docker-compose.yaml`              | Defines Spark service and mounts code volume     |
+
+---
+
+### 📦 Kafka Topics
+
+| Topic                    | Description                             |
+|--------------------------|-----------------------------------------|
+| `traffic.raw.sensors`    | Raw data from Kafka producer            |
+| `traffic.curated.sensors`| All enriched sensor records             |
+| `traffic.anomalies`      | Filtered records with high `z_score`    |
+
+---
+
+### 🚀 Run the Spark Job
+
+This is handled automatically via `docker-compose`. The `spark` service will:
+
+- Use the official image: `apache/spark:3.5.1-java17`
+- Run `spark-submit` on `stream_processor.py`
+- Use `spark-sql-kafka` dependency
+
+To re-run Spark manually if needed:
+
+```bash
+docker compose restart spark
+

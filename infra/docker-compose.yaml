@@ -40,19 +40,47 @@ services:
         timeout: 5s
         retries: 10
 
+  kafka-topic-init:
+      image: confluentinc/cp-kafka:7.6.1
+      depends_on:
+        kafka:
+          condition: service_healthy
+      entrypoint: [ "/bin/bash", "-c", "/scripts/create_topics.sh" ]
+      volumes:
+        - ../scripts:/scripts
+
+  
+  # New initialization container for Spark permissions
+  spark-init:
+    image: apache/spark:3.5.1-java17
+    volumes:
+      - spark_ivy_cache:/home/spark/.ivy2
+    command: bash -c "chown -R spark:spark /home/spark/.ivy2"
+    user: root
+    # Run and exit before starting Spark
+    depends_on:
+      - kafka
 
   spark:
-    image: apache/spark:3.5.1-java17  # FIXED TAG
-    environment:
-      SPARK_MODE: driver
+    image: apache/spark:3.5.1-java17
+    container_name: spark
     volumes:
-      - ../streaming:/app         # adjust relative path to your project root
-      - ../storage:/data
+      - ../streaming:/opt/workspace/streaming
+      - spark_ivy_cache:/home/spark/.ivy2
+    working_dir: /opt/workspace
+    # IMPORTANT: Explicitly set the user to 'spark' to match the directory ownership
+    user: spark
+    command: >
+      /opt/spark/bin/spark-submit
+      --master local[*]
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      /opt/workspace/streaming/spark_app/stream_processor.py
     depends_on:
-      kafka:
-        condition: service_healthy
-    # Example submit:
-    # docker compose exec spark spark-submit --packages io.delta:delta-spark_2.12:3.2.0 /app/spark_app/main.py
+      - kafka
+      - spark-init # Ensure initialization runs first
+      - kafka-topic-init
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
 
   grafana:
     image: grafana/grafana:latest
@@ -68,3 +96,4 @@ services:
 
 volumes:
   mongo_data:
+  spark_ivy_cache:

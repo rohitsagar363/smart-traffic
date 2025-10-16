@@ -1,0 +1,10 @@
+{
+  "sensor_id": "S0042",
+  "event_time": "2025-10-15T20:46:00Z",
+  "z_score": 3.8,
+  "speed_kph": 9.7,
+  "lat": 17.4421,
+  "lon": 78.3564,
+  "reason": "sudden_drop",
+  "window_sec": 300
+}

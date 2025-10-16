@@ -4,7 +4,7 @@ import json
 import time
 from kafka import KafkaProducer
 
-KAFKA_BROKER = "localhost:9092"
+KAFKA_BROKER = "localhost:29092"
 TOPIC = "traffic.raw.sensors"
 
 producer = KafkaProducer(

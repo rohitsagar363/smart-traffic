@@ -1,0 +1,12 @@
+{
+  "sensor_id": "S0042",
+  "ts": "2025-10-15T20:45:10Z",
+  "lat": 17.4421,
+  "lon": 78.3564,
+  "speed_kph": 52.3,
+  "heading": 90,
+  "lane_id": 2,
+  "occupancy": 0.41,
+  "source": "loop",
+  "road_id": "NH-65:seg-1203"
+}
