@@ -143,8 +143,9 @@ bash /data/kafka/consumers.sh traffic.raw.sensors
 # Run Python producer to send test messages
 python producer.py
 
+--
 
-## ⚙️ Step 3: Spark Streaming — Enrichment & Filtering
+### ⚙️ Step 3: Spark Streaming — Enrichment & Filtering
 
 In this step, we implemented a **Spark Structured Streaming job** to consume sensor data from Kafka, enrich it, and split it into curated and anomaly streams.
 
@@ -193,3 +194,94 @@ To re-run Spark manually if needed:
 ```bash
 docker compose restart spark
 
+
+## 🧩 Step 4: MongoDB Sink — Persist to Database
+
+In this step, we created a **new Spark Structured Streaming job** (`stream_processor_mongo.py`) to store both curated and anomaly data directly into **MongoDB** collections, allowing us to persist enriched streaming data for further querying and visualization.
+
+---
+
+### 🎯 Goals
+
+- Read JSON events from Kafka topic `traffic.raw.sensors`
+- Parse and enrich events using Spark
+- Split into:
+  - `curated_sensors` (all events)
+  - `anomaly_sensors` (events with non-null `reason`)
+- Store each stream in MongoDB collections using Spark Connector
+
+---
+
+### 🛠️ Components
+
+| File                                       | Purpose                                                   |
+|-------------------------------------------|-----------------------------------------------------------|
+| `streaming/spark_app/stream_processor_mongo.py` | Spark job that writes curated and anomaly data to MongoDB |
+| `mongodb` container                        | Stores all sensor data in collections under `traffic` DB  |
+
+---
+
+### 🗃 MongoDB Collections
+
+| Database | Collection         | Description                        |
+|----------|--------------------|------------------------------------|
+| `traffic` | `curated_sensors`  | All enriched/valid sensor events   |
+| `traffic` | `anomaly_sensors`  | Events flagged as anomalies        |
+
+---
+
+### 🚀 Run the Spark Job
+
+If your container is configured correctly, the job will run automatically when you start the stack:
+
+```bash
+docker compose restart spark
+```
+
+To manually run only this MongoDB Spark job:
+
+```bash
+docker compose exec spark spark-submit /opt/workspace/streaming/spark_app/stream_processor_mongo.py
+```
+
+---
+
+### 🧪 Verify MongoDB Storage
+
+**Option 1: Terminal — `mongosh`**
+
+```bash
+docker compose exec mongodb mongosh
+```
+
+```javascript
+use traffic;
+db.curated_sensors.find().pretty();
+db.anomaly_sensors.find().pretty();
+```
+
+**Option 2: MongoDB Compass**
+
+- Install via Homebrew:
+  ```bash
+  brew install --cask mongodb-compass
+  ```
+- Connect to:
+  ```
+  mongodb://localhost:27017
+  ```
+- Browse the `traffic` DB and view documents
+
+---
+
+### 💡 Notes
+
+- Checkpoints:
+  - Curated: `/tmp/checkpoints/curated`
+  - Anomalies: `/tmp/checkpoints/anomalies`
+- This job **does not write back** to Kafka — it’s focused solely on MongoDB persistence
+- Data is now queryable, indexable, and ready for dashboards (via Compass or Grafana Mongo plugin)
+
+---
+
+✅ **Next:** Use MongoDB data to create interactive Grafana dashboards (Step 5)

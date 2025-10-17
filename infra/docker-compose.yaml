@@ -52,7 +52,8 @@ services:
   
   # New initialization container for Spark permissions
   spark-init:
-    image: apache/spark:3.5.1-java17
+    image: apache/spark:3.4.2
+    container_name: spark-init
     volumes:
       - spark_ivy_cache:/home/spark/.ivy2
     command: bash -c "chown -R spark:spark /home/spark/.ivy2"
@@ -62,7 +63,7 @@ services:
       - kafka
 
   spark:
-    image: apache/spark:3.5.1-java17
+    image: apache/spark:3.4.2
     container_name: spark
     volumes:
       - ../streaming:/opt/workspace/streaming
@@ -70,11 +71,16 @@ services:
     working_dir: /opt/workspace
     # IMPORTANT: Explicitly set the user to 'spark' to match the directory ownership
     user: spark
+    # command: >
+    #   /opt/spark/bin/spark-submit
+    #   --master local[*]
+    #   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+    #   /opt/workspace/streaming/spark_app/stream_processor.py
     command: >
       /opt/spark/bin/spark-submit
       --master local[*]
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
-      /opt/workspace/streaming/spark_app/stream_processor.py
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.mongodb.spark:mongo-spark-connector_2.12:10.2.0
+      /opt/workspace/streaming/spark_app/stream_processor_mongo.py
     depends_on:
       - kafka
       - spark-init # Ensure initialization runs first
